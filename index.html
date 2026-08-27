@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小雨 · 个人主页</title>
+<meta name="description" content="小雨的个人名片 —— 热爱捣鼓网页、喜欢折腾视觉设计的爱好者。">
+<style>
+/* ============================================================
+   小雨 · 个人主页  (单文件 HTML · 无外部依赖)
+   视觉：Kinetic Grid 动态网格 + 雪景毛玻璃 + BorderBeam 光束
+        + Liquid Glass 按钮 + Apple 液态玻璃音乐播放器
+   ============================================================ */
+
+:root{
+  --bg:#050506;
+  --panel:rgba(255,255,255,.045);
+  --panel-2:rgba(255,255,255,.07);
+  --line:rgba(255,255,255,.12);
+  --line-soft:rgba(255,255,255,.06);
+  --txt:#f5f5f6;
+  --muted:rgba(255,255,255,.62);
+  --faint:rgba(255,255,255,.44);
+  --accent:#fbbf24;
+  --accent-2:#fb923c;
+  --accent-glow:rgba(251,191,36,.30);
+  --nav-bg:rgba(7,7,9,.62);
+  --btn-glass-bg:rgba(255,255,255,.07);
+  --btn-glass-border:rgba(255,255,255,.14);
+  --btn-glass-hi:rgba(255,255,255,.14);
+  --grid-dot:rgba(255,255,255,.5);
+  --grid-line:rgba(255,255,255,.07);
+  --grid-glow:rgba(251,191,36,.10);
+  --overlay:rgba(0,0,0,.45);
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--bg);
+  color:var(--txt);
+  line-height:1.7;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+::selection{background:var(--accent-glow);color:var(--txt)}
+a{color:inherit;text-decoration:none}
+
+/* ---------- 背景层 ---------- */
+#kinetic-grid{position:fixed;inset:0;z-index:0;width:100%;height:100%;display:block}
+#bg-photo{
+  position:fixed;inset:-6%;z-index:0;pointer-events:none;
+  background-image:url('./微信图片_20260102175910_66_6.jpg');
+  background-size:cover;background-position:center;
+  filter:blur(38px) saturate(1.15) brightness(.62);
+  opacity:.30;
+}
+#glow-top{
+  position:fixed;left:50%;top:-26vh;transform:translateX(-50%);
+  width:120vmax;height:70vh;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse at center,var(--accent-glow),transparent 62%);
+}
+#vignette{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(120% 90% at 50% 10%,transparent 55%,var(--overlay) 100%);
+}
+body::after{
+  content:"";position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+}
+
+.wrap{position:relative;z-index:1}
+
+/* ============================================================
+   BorderBeam —— 卡片旋转彩色光束边框
+   ============================================================ */
+@property --beam-angle{
+  syntax:'<angle>';
+  initial-value:0deg;
+  inherits:false;
+}
+.beam{position:relative;isolation:isolate}
+.beam::before{
+  content:"";position:absolute;inset:0;border-radius:inherit;
+  padding:1.5px;
+  background:conic-gradient(
+    from var(--beam-angle),
+    transparent 0%,
+    transparent 62%,
+    rgba(251,191,36,.85) 70%,
+    rgba(251,146,60,.8) 76%,
+    rgba(167,139,250,.7) 83%,
+    rgba(56,189,248,.6) 90%,
+    transparent 100%
+  );
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+  mask-composite:exclude;
+  animation:beam-spin 5.5s linear infinite;
+  pointer-events:none;z-index:1;
+}
+@keyframes beam-spin{to{--beam-angle:360deg}}
+
+/* ---------- 玻璃卡片基底 ---------- */
+.glass{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:22px;
+  backdrop-filter:blur(14px) saturate(130%);
+  -webkit-backdrop-filter:blur(14px) saturate(130%);
+  box-shadow:0 20px 60px rgba(0,0,0,.3);
+}
+.glass > *{position:relative;z-index:2}
+
+/* ============================================================
+   导航栏
+   ============================================================ */
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:50;
+  transition:background .35s,border-color .35s,backdrop-filter .35s;
+  border-bottom:1px solid transparent;
+}
+.nav.scrolled{
+  background:var(--nav-bg);
+  backdrop-filter:blur(16px) saturate(140%);
+  -webkit-backdrop-filter:blur(16px) saturate(140%);
+  border-bottom-color:var(--line-soft);
+}
+.nav-inner{
+  max-width:1100px;margin:0 auto;padding:14px 24px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+}
+.logo{display:flex;align-items:center;gap:11px;font-weight:700;font-size:18px;letter-spacing:.5px;flex-shrink:0}
+.logo-mark{
+  width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
+  font-size:15px;color:#241a00;font-weight:800;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  box-shadow:0 0 18px var(--accent-glow);
+}
+.logo .dot{color:var(--accent)}
+
+.menu{display:flex;align-items:center;gap:4px;list-style:none}
+.menu a{
+  display:block;padding:8px 15px;border-radius:999px;
+  font-size:14.5px;color:var(--muted);position:relative;
+  transition:color .25s,background .25s;
+}
+.menu a:hover{color:var(--txt);background:var(--panel-2)}
+.menu a.active{color:var(--txt)}
+.menu a.active::after{
+  content:"";position:absolute;left:15px;right:15px;bottom:4px;height:2px;border-radius:2px;
+  background:linear-gradient(90deg,var(--accent),var(--accent-2));
+}
+.nav-cta{
+  margin-left:4px;padding:9px 20px !important;border-radius:999px;
+  font-size:14px !important;font-weight:600;
+  border:1px solid rgba(251,191,36,.35) !important;
+  color:var(--accent) !important;
+  background:rgba(251,191,36,.08) !important;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  transition:.25s;
+}
+.nav-cta:hover{background:rgba(251,191,36,.16) !important;box-shadow:0 0 20px var(--accent-glow);transform:translateY(-1px)}
+
+.burger{display:none;width:42px;height:42px;border:1px solid var(--line-soft);border-radius:12px;background:var(--btn-glass-bg);cursor:pointer;flex-direction:column;align-items:center;justify-content:center;gap:5px;flex-shrink:0}
+.burger span{display:block;width:18px;height:2px;border-radius:2px;background:var(--txt);transition:.3s}
+.nav.open .burger span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.nav.open .burger span:nth-child(2){opacity:0}
+.nav.open .burger span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+
+/* ============================================================
+   Hero
+   ============================================================ */
+.hero{
+  min-height:100vh;min-height:100svh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:120px 24px 90px;position:relative;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:9px;
+  padding:7px 16px;border-radius:999px;margin-bottom:30px;
+  border:1px solid var(--line);background:var(--panel);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  font-size:12.5px;letter-spacing:1px;color:var(--faint);
+}
+.pulse{width:7px;height:7px;border-radius:50%;background:var(--accent);position:relative}
+.pulse::after{
+  content:"";position:absolute;inset:0;border-radius:50%;
+  background:var(--accent);opacity:.6;animation:pulse 1.8s ease-out infinite;
+}
+@keyframes pulse{0%{transform:scale(1);opacity:.6}100%{transform:scale(3.2);opacity:0}}
+
+.avatar{
+  width:136px;height:136px;border-radius:50%;padding:4px;margin-bottom:30px;
+  background:conic-gradient(from 210deg,var(--accent),var(--accent-2),var(--accent));
+  box-shadow:0 0 0 1px var(--line),0 0 46px var(--accent-glow);
+  animation:avatarFloat 6s ease-in-out infinite;
+}
+.avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;background:#141416}
+@keyframes avatarFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+
+.hero .greet{font-size:15px;color:var(--muted);letter-spacing:2px;margin-bottom:8px}
+.hero-name{
+  font-size:clamp(56px,11vw,104px);font-weight:800;line-height:1.08;letter-spacing:-2px;
+  background:linear-gradient(180deg,var(--txt) 30%,var(--accent) 130%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  margin-bottom:26px;
+}
+.hero-desc{
+  max-width:620px;font-size:clamp(15px,2.2vw,17.5px);color:var(--muted);
+  margin-bottom:40px;
+}
+.hero-desc b{color:var(--accent);font-weight:600}
+
+/* ============================================================
+   Liquid Glass 按钮
+   ============================================================ */
+.btn-glass{
+  position:relative;display:inline-flex;align-items:center;gap:9px;
+  padding:13px 30px;border-radius:999px;
+  font-size:15px;font-weight:600;cursor:pointer;border:none;
+  color:var(--txt);overflow:hidden;
+  background:var(--btn-glass-bg);
+  border:1px solid var(--btn-glass-border);
+  backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);
+  box-shadow:inset 0 1px 0 var(--btn-glass-hi),0 6px 22px rgba(0,0,0,.22);
+  transition:transform .25s,box-shadow .25s,border-color .25s,background .25s;
+}
+.btn-glass::before{
+  content:"";position:absolute;top:0;left:8%;right:8%;height:52%;
+  background:linear-gradient(to bottom,var(--btn-glass-hi),transparent);
+  border-radius:999px 999px 0 0;pointer-events:none;
+}
+.btn-glass::after{
+  content:"";position:absolute;top:0;left:-120%;
+  width:55%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);
+  transition:left .65s ease;pointer-events:none;
+}
+.btn-glass:hover{transform:translateY(-2px);border-color:var(--line);box-shadow:inset 0 1px 0 var(--btn-glass-hi),0 10px 30px rgba(0,0,0,.3)}
+.btn-glass:hover::after{left:130%}
+.btn-glass:active{transform:translateY(0)}
+.btn-glass.primary{
+  color:#241a00;
+  background:linear-gradient(135deg,rgba(251,191,36,.92),rgba(251,146,60,.88));
+  border-color:rgba(251,191,36,.5);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 8px 28px var(--accent-glow);
+}
+.btn-glass.primary::before{background:linear-gradient(to bottom,rgba(255,255,255,.35),transparent)}
+.btn-glass.primary::after{background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent)}
+.btn-glass.fireworks{
+  color:#fff;
+  background:linear-gradient(135deg,rgba(251,146,60,.85),rgba(239,68,68,.8));
+  border-color:rgba(251,146,60,.5);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 8px 28px rgba(251,146,60,.35);
+}
+.btn-glass.fireworks::before{background:linear-gradient(to bottom,rgba(255,255,255,.25),transparent)}
+.btn-glass.fireworks::after{background:linear-gradient(90deg,transparent,rgba(255,255,255,.25),transparent)}
+
+.hero-cta{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
+
+.scroll-hint{
+  position:absolute;bottom:30px;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  color:var(--faint);font-size:12px;letter-spacing:2px;
+}
+.scroll-hint .mouse{width:24px;height:38px;border:1.6px solid var(--line);border-radius:14px;position:relative}
+.scroll-hint .mouse::before{
+  content:"";position:absolute;left:50%;top:7px;transform:translateX(-50%);
+  width:3px;height:7px;border-radius:3px;background:var(--accent);
+  animation:wheel 1.8s ease-in-out infinite;
+}
+@keyframes wheel{0%{opacity:1;transform:translate(-50%,0)}70%{opacity:0;transform:translate(-50%,12px)}100%{opacity:0}}
+
+/* ============================================================
+   通用区块
+   ============================================================ */
+section{max-width:1100px;margin:0 auto;padding:110px 24px 30px;scroll-margin-top:70px}
+.section-head{margin-bottom:48px}
+.pill{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 15px;border-radius:999px;margin-bottom:18px;
+  border:1px solid rgba(251,191,36,.3);background:rgba(251,191,36,.07);
+  font-size:12.5px;letter-spacing:1.5px;color:var(--accent);
+}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.section-title{font-size:clamp(28px,4.6vw,42px);font-weight:800;letter-spacing:-1px;line-height:1.2}
+.section-sub{margin-top:14px;max-width:560px;color:var(--muted);font-size:15.5px}
+
+.about-grid{display:grid;grid-template-columns:1.35fr 1fr;gap:22px;align-items:stretch}
+.about-card{padding:42px 40px}
+.about-card p{color:var(--muted);font-size:15.5px;margin-bottom:16px}
+.about-card p:last-child{margin-bottom:0}
+.about-card p b{color:var(--txt)}
+.hl{color:var(--accent)}
+.skills{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+.chip{
+  padding:7px 15px;border-radius:999px;font-size:13px;color:var(--muted);
+  border:1px solid var(--line);background:var(--panel);transition:.25s;
+}
+.chip:hover{color:var(--accent);border-color:var(--accent);background:rgba(251,191,36,.08);transform:translateY(-2px)}
+.stats{border-radius:22px;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;gap:0}
+.stat{
+  padding:30px 26px;background:var(--panel);
+  border:1px solid var(--line-soft);
+  display:flex;flex-direction:column;gap:6px;position:relative;overflow:hidden;
+}
+.stat::after{
+  content:"";position:absolute;right:-30px;top:-30px;width:90px;height:90px;border-radius:50%;
+  background:radial-gradient(circle,var(--accent-glow),transparent 70%);
+}
+.stat b{
+  font-size:clamp(28px,4vw,38px);font-weight:800;line-height:1.1;letter-spacing:-1px;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.stat span{font-size:13px;color:var(--faint)}
+
+.contact{padding-bottom:40px}
+.contact-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.contact-card{
+  display:flex;align-items:center;gap:16px;
+  padding:24px 22px;border-radius:20px;cursor:pointer;
+  transition:transform .3s cubic-bezier(.16,1,.3,1);
+}
+.contact-card:hover{transform:translateY(-4px)}
+.cc-icon{
+  width:50px;height:50px;flex-shrink:0;border-radius:14px;
+  display:grid;place-items:center;
+  background:var(--panel-2);border:1px solid var(--line);
+  color:var(--accent);
+}
+.cc-info{flex:1;min-width:0}
+.cc-label{display:block;font-size:12px;color:var(--faint);letter-spacing:1px;margin-bottom:3px}
+.cc-value{display:block;font-size:15px;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cc-arrow{color:var(--faint);font-size:18px;flex-shrink:0;transition:transform .3s,color .3s}
+.contact-card:hover .cc-arrow{transform:translateX(4px);color:var(--accent)}
+
+/* ============================================================
+   Apple 液态玻璃音乐播放器
+   ============================================================ */
+.player{
+  position:fixed;bottom:22px;right:22px;z-index:60;
+  display:flex;align-items:center;gap:14px;
+  padding:12px 16px 12px 12px;
+  width:372px;max-width:calc(100vw - 44px);
+  border-radius:20px;
+  background:rgba(255,255,255,.08);
+  backdrop-filter:blur(24px) saturate(180%);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 14px 44px rgba(0,0,0,.45);
+  transition:transform .3s,box-shadow .3s;
+}
+.player:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 18px 54px rgba(0,0,0,.5)}
+.player-cover{
+  width:52px;height:52px;flex-shrink:0;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  display:grid;place-items:center;
+  box-shadow:0 0 0 2px rgba(255,255,255,.1),0 4px 16px var(--accent-glow);
+  position:relative;overflow:hidden;
+}
+.player-cover.spinning{animation:spin 8s linear infinite}
+.player-cover svg{width:22px;height:22px;color:#241a00;position:relative;z-index:2}
+.player-cover::after{
+  content:"";position:absolute;inset:0;border-radius:50%;
+  background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.4),transparent 50%);
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.player-body{flex:1;min-width:0}
+.player-track{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:6px}
+.track-name{font-size:14px;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.track-index{font-size:11px;color:var(--faint);flex-shrink:0}
+.player-bar{display:flex;align-items:center;gap:8px}
+.bar-track{flex:1;height:4px;border-radius:4px;background:rgba(255,255,255,.12);cursor:pointer;position:relative}
+.bar-fill{height:100%;border-radius:4px;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .1s linear}
+.bar-thumb{
+  position:absolute;top:50%;left:0%;transform:translate(-50%,-50%);
+  width:10px;height:10px;border-radius:50%;background:#fff;box-shadow:0 0 8px var(--accent-glow);opacity:0;transition:opacity .2s;
+}
+.bar-track:hover .bar-thumb{opacity:1}
+.player-time{font-size:10.5px;color:var(--faint);min-width:62px;text-align:right;font-variant-numeric:tabular-nums}
+.player-ctrls{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.ctrl-btn{
+  width:34px;height:34px;border-radius:50%;border:none;cursor:pointer;display:grid;place-items:center;
+  background:rgba(255,255,255,.06);color:var(--muted);transition:background .2s,color .2s,transform .15s;
+}
+.ctrl-btn:hover{background:rgba(255,255,255,.12);color:var(--txt)}
+.ctrl-btn:active{transform:scale(.92)}
+.ctrl-btn svg{width:16px;height:16px}
+.ctrl-play{
+  width:40px;height:40px;background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  color:#241a00;box-shadow:0 4px 14px var(--accent-glow);
+}
+.ctrl-play:hover{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#241a00;transform:scale(1.06)}
+
+footer{
+  position:relative;z-index:1;text-align:center;
+  padding:46px 24px 110px;border-top:1px solid var(--line-soft);margin-top:70px;
+}
+footer p{color:var(--faint);font-size:14px;letter-spacing:1px}
+footer .foot-love{margin-top:8px;font-size:12.5px}
+footer .foot-love span{color:var(--accent)}
+
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .8s cubic-bezier(.16,1,.3,1),transform .8s cubic-bezier(.16,1,.3,1)}
+.reveal.in{opacity:1;transform:none}
+
+@media (max-width:1000px){.contact-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:900px){.about-grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
+@media (max-width:720px){
+  .menu{
+    position:fixed;top:72px;left:16px;right:16px;flex-direction:column;align-items:stretch;gap:4px;
+    background:var(--nav-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    border:1px solid var(--line);border-radius:18px;padding:12px;
+    opacity:0;visibility:hidden;transform:translateY(-12px);transition:.3s;box-shadow:0 24px 60px rgba(0,0,0,.5);
+  }
+  .nav.open .menu{opacity:1;visibility:visible;transform:none}
+  .menu a{padding:13px 16px;font-size:15px}
+  .nav-cta{margin-left:0;text-align:center}
+  .burger{display:flex}
+  .nav-cta{display:none !important}
+  .player{width:calc(100vw - 32px);right:16px;bottom:16px;padding:10px 14px 10px 10px;gap:12px}
+  .player-cover{width:44px;height:44px}
+  .player-cover svg{width:18px;height:18px}
+  .ctrl-btn{width:30px;height:30px}
+  .ctrl-play{width:36px;height:36px}
+}
+@media (max-width:560px){.contact-grid{grid-template-columns:1fr}.about-card{padding:32px 24px}}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .reveal{opacity:1;transform:none;transition:none}
+  .avatar,.scroll-hint .mouse::before,.pulse::after,.player-cover.spinning{animation:none}
+  .beam::before{animation:none}
+  #kinetic-grid{display:none}
+}
+
+/* ===== 烟花模拟器样式（iframe 嵌入原版，全屏覆盖层） ===== */
+/* 外层遮罩：铺满整屏，负责背景与居中 */
+.fw-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.85);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.45s ease, visibility 0.45s;
+    /* 使用 flex 居中，让内部窗口有安全边距，避免 X 遮挡设置按钮 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 56px 20px 20px; /* 顶部留出 56px，给 X 按钮空间 */
+}
+.fw-overlay.fw-open {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* 烟花窗口：四周留安全边距，绝不铺满，保证内部设置按钮可点 */
+.fw-overlay .fw-iframe {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    border: 0;
+    border-radius: 14px;
+    background: #000;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+}
+
+/* 关闭按钮：固定在遮罩的右上角（边距外），不压在 iframe 内容上 */
+.fw-overlay .fw-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 1010; /* 高于 iframe，确保可点击 */
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(20, 20, 25, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, transform 0.15s;
+    user-select: none;
+}
+.fw-overlay .fw-close:hover {
+    background: rgba(239, 68, 68, 0.85);
+    transform: scale(1.08);
+}
+.fw-overlay .fw-close:active { transform: scale(0.94); }
+.fw-overlay .fw-close svg { width: 22px; height: 22px; fill: currentColor; }
+
+/* 移动端：关闭按钮靠边一点 */
+@media (max-width: 600px) {
+    .fw-overlay { padding: 52px 12px 12px; }
+    .fw-overlay .fw-close {
+        top: 12px;
+        right: 12px;
+        width: 40px;
+        height: 40px;
+    }
+}
+</style>
+</head>
+<body>
+
+<canvas id="kinetic-grid" aria-hidden="true"></canvas>
+<div id="bg-photo" aria-hidden="true"></div>
+<div id="glow-top" aria-hidden="true"></div>
+<div id="vignette" aria-hidden="true"></div>
+
+<!-- ============================================================ -->
+
+<div class="wrap">
+
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <a class="logo" href="#home">
+        <span class="logo-mark">雨</span>
+        <span>小雨<span class="dot">.</span></span>
+      </a>
+      <ul class="menu">
+        <li><a href="#home" class="active">首页</a></li>
+        <li><a href="#about">关于我</a></li>
+        <li><a href="#contact">联系我</a></li>
+        <li><a class="nav-cta" href="#contact">一起创作 ✦</a></li>
+      </ul>
+      <button class="burger" id="burger" aria-label="打开菜单" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <header class="hero" id="home">
+    <span class="hero-badge"><span class="pulse"></span>欢迎来到我的小世界</span>
+
+    <div class="avatar">
+      <img src="./微信图片_2025-08-28_182837_934.jpg" alt="小雨的头像"
+           onerror="this.src='https://api.dicebear.com/9.x/notionists/svg?seed=Xiaoyu'">
+    </div>
+
+    <p class="greet">哈喽，我是</p>
+    <h1 class="hero-name">小雨</h1>
+
+    <p class="hero-desc">
+      一个热爱捣鼓网页、喜欢折腾<b>视觉设计</b>的爱好者。<br>
+      擅长把脑洞变成好看又好用的页面，享受从零到一搭建作品的过程，<br>
+      也一直在学习打磨技术，期待用代码创造更多有意思的小世界。
+    </p>
+
+    <div class="hero-cta">
+      <a class="btn-glass primary" href="#about">
+        了解更多
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14m0 0 6-6m-6 6-6-6"/></svg>
+      </a>
+      <a class="btn-glass" href="#contact">联系我</a>
+      <button class="btn-glass fireworks" id="fwOpenBtn" type="button">烟花模拟器</button>
+    </div>
+
+    <div class="scroll-hint">
+      <span class="mouse"></span>
+      <span>往下滑</span>
+    </div>
+  </header>
+
+  <section id="about">
+    <div class="section-head reveal">
+      <span class="pill">关于我</span>
+      <h2 class="section-title">用热爱捣鼓出来的小世界</h2>
+      <p class="section-sub">一些关于我的小事，欢迎认识我～</p>
+    </div>
+    <div class="about-grid">
+      <div class="glass beam about-card reveal">
+        <p>你好呀，我是<b>小雨</b>。一个把「捣鼓」当日常的网页与视觉设计爱好者。对我来说，代码不只是工具，更像是把想象力变成现实的画笔。</p>
+        <p>我喜欢从一张白纸开始，慢慢搭出结构、调好配色、加上恰到好处的动效，直到它变成真正<span class="hl">好看又好用</span>的页面。过程可能漫长，但每次按下刷新、看到作品成型的那一刻，都特别有成就感。</p>
+        <p>未来我也会继续学习、继续打磨手艺，用代码创造更多有意思的小世界。如果你也喜欢捣鼓，那我们应该很聊得来～</p>
+        <div class="skills">
+          <span class="chip">HTML</span><span class="chip">CSS</span><span class="chip">JavaScript</span>
+          <span class="chip">UI / 视觉设计</span><span class="chip">动效创意</span><span class="chip">响应式布局</span>
+        </div>
+      </div>
+      <div class="glass beam stats reveal">
+        <div class="stat"><b>10+</b><span>独立作品</span></div>
+        <div class="stat"><b>1+</b><span>年折腾经验</span></div>
+        <div class="stat"><b>∞</b><span>好奇心</span></div>
+        <div class="stat"><b>100%</b><span>对细节的热爱</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="contact" id="contact">
+    <div class="section-head reveal">
+      <span class="pill">联系我</span>
+      <h2 class="section-title">一起创造点有意思的？</h2>
+      <p class="section-sub">有任何想法、合作机会，或者只是想聊聊设计与代码，都欢迎随时找我～</p>
+    </div>
+    <div class="contact-grid">
+      <a class="contact-card glass beam reveal" href="#" onclick="return false;" title="微信号：GowxH-1121">
+        <span class="cc-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8.5" cy="11" r="4.6"/><circle cx="16" cy="14.5" r="3.4"/><path d="M5.6 15.4 4 19l3.4-1.1"/></svg></span>
+        <span class="cc-info"><span class="cc-label">微信</span><span class="cc-value">GowxH-1121</span></span>
+        <span class="cc-arrow">→</span>
+      </a>
+      <a class="contact-card glass beam reveal" href="mailto:188483707@qq.com">
+        <span class="cc-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="m3.5 7.5 8.5 6 8.5-6"/></svg></span>
+        <span class="cc-info"><span class="cc-label">邮箱</span><span class="cc-value">188483707@qq.com</span></span>
+        <span class="cc-arrow">→</span>
+      </a>
+      <a class="contact-card glass beam reveal" href="https://www.douyin.com/user/self?from_tab_name=main" target="_blank" rel="noopener">
+        <span class="cc-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5.5l11-2V16"/><circle cx="6.5" cy="18" r="2.6"/><circle cx="17.5" cy="16" r="2.6"/></svg></span>
+        <span class="cc-info"><span class="cc-label">抖音</span><span class="cc-value">@小雨</span></span>
+        <span class="cc-arrow">→</span>
+      </a>
+      <a class="contact-card glass beam reveal" href="https://github.com/xiaoyuuo" target="_blank" rel="noopener">
+        <span class="cc-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></span>
+        <span class="cc-info"><span class="cc-label">GitHub</span><span class="cc-value">@xiaoyuuo</span></span>
+        <span class="cc-arrow">→</span>
+      </a>
+      <a class="contact-card glass beam reveal" href="https://space.bilibili.com/3537105026288107?" target="_blank" rel="noopener">
+        <span class="cc-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="3"/><circle cx="8" cy="4.5" r="1.4"/><circle cx="16" cy="4.5" r="1.4"/><path d="M9.5 12h5v4h-5z"/></svg></span>
+        <span class="cc-info"><span class="cc-label">哔哩哔哩</span><span class="cc-value">@小雨</span></span>
+        <span class="cc-arrow">→</span>
+      </a>
+      <a class="contact-card glass beam reveal" href="https://www.coolapk.com/u/29512348" target="_blank" rel="noopener">
+        <span class="cc-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10a7 7 0 0 1 14 0"/><rect x="4" y="10" width="16" height="10" rx="3"/><circle cx="9" cy="14.5" r="1"/><circle cx="15" cy="14.5" r="1"/></svg></span>
+        <span class="cc-info"><span class="cc-label">酷安</span><span class="cc-value">@小雨</span></span>
+        <span class="cc-arrow">→</span>
+      </a>
+    </div>
+  </section>
+
+  <footer>
+    <p>© 2026 XYCM</p>
+    <p class="foot-love">由 <span>小雨</span> 用心制作 · Powered by curiosity</p>
+  </footer>
+</div>
+
+<div class="player" id="player" role="region" aria-label="背景音乐播放器">
+  <div class="player-cover" id="playerCover">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+  </div>
+  <div class="player-body">
+    <div class="player-track">
+      <span class="track-name" id="trackName">下完这场雨</span>
+      <span class="track-index" id="trackIndex">1 / 7</span>
+    </div>
+    <div class="player-bar">
+      <div class="bar-track" id="barTrack"><div class="bar-fill" id="barFill"></div><div class="bar-thumb" id="barThumb"></div></div>
+      <span class="player-time"><span id="curTime">0:00</span> / <span id="totTime">0:00</span></span>
+    </div>
+  </div>
+  <div class="player-ctrls">
+    <button class="ctrl-btn" id="prevBtn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+    <button class="ctrl-btn ctrl-play" id="playBtn"><svg id="playIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+    <button class="ctrl-btn" id="nextBtn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+  </div>
+</div>
+<audio id="audio" preload="auto" playsinline></audio>
+
+<script>
+/* ============================================================
+   ① Kinetic Grid 动态网格背景（升级：+点击水波纹涟漪扩散到边缘）
+   ============================================================ */
+(function(){
+  const canvas = document.getElementById('kinetic-grid');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let w, h, cols, rows, grid, mouse;
+  const spacing = 38, dotRadius = 1.3, maxDist = 168;
+
+  // ★ 波纹数组：点击产生涟漪，扩散到屏幕边缘才销毁
+  const ripples = [];
+
+  function init(){
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+    cols = Math.floor(w / spacing) + 2;
+    rows = Math.floor(h / spacing) + 2;
+    grid = [];
+    for(let i = 0; i < cols; i++){
+      grid[i] = [];
+      for(let j = 0; j < rows; j++){
+        grid[i][j] = { ox: i*spacing, oy: j*spacing, x: i*spacing, y: j*spacing, vx: 0, vy: 0 };
+      }
+    }
+    mouse = { x: w/2, y: h/2, active: false };
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,w,h);
+    const style = getComputedStyle(document.documentElement);
+    const dotC = style.getPropertyValue('--grid-dot').trim();
+    const lineC = style.getPropertyValue('--grid-line').trim();
+    const glowC = style.getPropertyValue('--grid-glow').trim();
+
+    // ★ 先画连线
+    ctx.lineWidth = 0.6;
+    for(let i=0;i<cols;i++){
+      for(let j=0;j<rows;j++){
+        const p = grid[i][j];
+        const neighbors = [];
+        if(i<cols-1) neighbors.push(grid[i+1][j]);
+        if(j<rows-1) neighbors.push(grid[i][j+1]);
+        if(i>0) neighbors.push(grid[i-1][j]);
+        if(j>0) neighbors.push(grid[i][j-1]);
+        neighbors.forEach(n=>{
+          const d = Math.hypot(p.x-n.x,p.y-n.y);
+          if(d<spacing*1.6){
+            ctx.strokeStyle=lineC;ctx.globalAlpha=(1-d/(spacing*1.6))*0.5;
+            ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(n.x,n.y);ctx.stroke();
+          }
+        });
+      }
+    }
+
+    // ★ 绘制波纹涟漪（在节点下层，形成水波扰动视觉）
+    ripples.forEach(rp=>{
+      const life = 1 - rp.r / rp.maxR; // 越到边缘越淡，但始终可见到边界
+      if(life <= 0) return;
+      ctx.beginPath();
+      ctx.arc(rp.x, rp.y, rp.r, 0, Math.PI*2);
+      ctx.strokeStyle = `rgba(251,191,36,${life*0.4})`;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(rp.x, rp.y, Math.max(0, rp.r-8), 0, Math.PI*2);
+      ctx.strokeStyle = `rgba(251,191,36,${life*0.18})`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    });
+
+    // ★ 画节点（含波纹推开效果）
+    for(let i=0;i<cols;i++){
+      for(let j=0;j<rows;j++){
+        const p = grid[i][j];
+        let alpha = 0.35;
+        if(mouse.active){
+          const d = Math.hypot(p.x-mouse.x,p.y-mouse.y);
+          if(d<maxDist){
+            alpha = 0.35+(1-d/maxDist)*0.65;
+            ctx.beginPath();ctx.arc(p.x,p.y,dotRadius*4,0,Math.PI*2);
+            ctx.fillStyle=glowC;ctx.globalAlpha=(1-d/maxDist)*0.4;ctx.fill();
+          }
+        }
+        // ★ 波纹经过时节点被向外推开，形成真实水波扰动
+        ripples.forEach(rp=>{
+          const dx=p.x-rp.x, dy=p.y-rp.y, rd=Math.hypot(dx,dy);
+          const ringWidth = 24;
+          const diff = Math.abs(rd - rp.r);
+          if(diff < ringWidth && rd > 0){
+            const force = (1 - diff/ringWidth) * (1 - rp.r/rp.maxR) * 1.5;
+            p.vx += (dx/rd) * force;
+            p.vy += (dy/rd) * force;
+          }
+        });
+        ctx.beginPath();ctx.arc(p.x,p.y,dotRadius,0,Math.PI*2);
+        ctx.fillStyle=dotC;ctx.globalAlpha=alpha;ctx.fill();
+      }
+    }
+    ctx.globalAlpha=1;
+  }
+
+  function update(){
+    if(!mouse.active) mouse.x=w/2, mouse.y=w/2;
+    for(let i=0;i<cols;i++){
+      for(let j=0;j<rows;j++){
+        const p = grid[i][j];
+        let fx=0,fy=0;
+        if(mouse.active){
+          const dx=mouse.x-p.x, dy=mouse.y-p.y, d=Math.hypot(dx,dy);
+          if(d<maxDist&&d>0){ fx+=(dx/d)*(1-d/maxDist)*0.8; fy+=(dy/d)*(1-d/maxDist)*0.8; }
+        }
+        fx+=(p.ox-p.x)*0.04; fy+=(p.oy-p.y)*0.04;
+        p.vx=(p.vx+fx)*0.88; p.vy=(p.vy+fy)*0.88;
+        p.x+=p.vx; p.y+=p.vy;
+      }
+    }
+    // ★ 更新波纹：持续扩散，直到半径超过屏幕对角线才销毁（彻底到头）
+    for(let i=ripples.length-1; i>=0; i--){
+      const rp = ripples[i];
+      rp.r += rp.speed;
+      if(rp.r > rp.maxR){
+        ripples.splice(i, 1);
+      }
+    }
+  }
+
+  function loop(){ update(); draw(); requestAnimationFrame(loop); }
+
+  // ★ 点击/触摸产生波纹（最大半径 = 屏幕对角线，保证扩散到最边缘）
+  function spawnRipple(x, y){
+    const maxR = Math.hypot(w, h);
+    ripples.push({ x, y, r: 0, maxR, speed: 4 });
+  }
+  window.addEventListener('click', e=>{ spawnRipple(e.clientX, e.clientY); });
+  window.addEventListener('touchstart', e=>{
+    if(e.touches[0]) spawnRipple(e.touches[0].clientX, e.touches[0].clientY);
+  }, {passive:true});
+
+  window.addEventListener('resize',init);
+  window.addEventListener('mousemove',e=>{mouse.x=e.clientX;mouse.y=e.clientY;mouse.active=true});
+  window.addEventListener('mouseleave',()=>mouse.active=false);
+  window.addEventListener('touchmove',e=>{
+    if(e.touches[0]){mouse.x=e.touches[0].clientX;mouse.y=e.touches[0].clientY;mouse.active=true}
+  },{passive:true});
+  window.addEventListener('touchend',()=>mouse.active=false);
+  init(); loop();
+})();
+
+/* ============================================================
+   ② 导航栏 / 菜单 / 高亮 / 入场动画（原始，未改动）
+   ============================================================ */
+(function(){
+  const nav = document.getElementById('nav');
+  const onScroll = () => { window.scrollY > 30 ? nav.classList.add('scrolled') : nav.classList.remove('scrolled'); };
+  window.addEventListener('scroll', onScroll); onScroll();
+})();
+(function(){
+  const burger = document.getElementById('burger'), nav = document.getElementById('nav');
+  burger.addEventListener('click', ()=>nav.classList.toggle('open'));
+})();
+(function(){
+  const obs = new IntersectionObserver(entries=>{
+    entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); obs.unobserve(e.target); }});
+  },{threshold:0.12});
+  document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+})();
+
+/* ============================================================
+   ③ Apple 音乐播放器 —— 恢复你原始的 7 首歌单与顺序
+   ============================================================ */
+(function(){
+  const audio = document.getElementById('audio');
+  const playBtn = document.getElementById('playBtn'), playIcon = document.getElementById('playIcon');
+  const barFill = document.getElementById('barFill'), barTrack = document.getElementById('barTrack');
+  const curTimeEl = document.getElementById('curTime'), totTimeEl = document.getElementById('totTime');
+  const trackName = document.getElementById('trackName'), trackIndex = document.getElementById('trackIndex');
+  const cover = document.getElementById('playerCover');
+
+  // ★ 原始顺序（已按你指定的顺序恢复）
+  // 路径说明：你的 mp3 与 index.html 在同一目录（见截图），故直接使用文件名。
+  // 同时做路径自适应：若检测到 ./music/ 目录下也存在同名文件，则自动优先使用 music/。
+  const playlistRaw = [
+    { name:'下完这场雨',       file:'下完这场雨.mp3' },
+    { name:'SeaMist',          file:'SeaMist.mp3' },
+    { name:'孤城',             file:'孤城.mp3' },
+    { name:'旧的东西会阻碍你前行', file:'旧的东西会阻碍你前行.mp3' },
+    { name:'中华有为',         file:'中华有为.mp3' },
+    { name:'独处时分',         file:'独处时分.mp3' },
+    { name:'nevada',           file:'nevada.mp3' }
+  ];
+  let playlist = playlistRaw.slice();
+
+  // ★ 图标常量（避免散落在各处）
+  const ICON_PLAY  = '<path d="M8 5v14l11-7z"/>';
+  const ICON_PAUSE = '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>';
+
+  // ★ 设置播放/暂停的 UI 状态（图标 + 封面旋转）唯一出口，避免状态不同步
+  function setPlayingUI(playing){
+    if(playing){
+      cover.classList.add('spinning');
+      playIcon.innerHTML = ICON_PAUSE;
+    } else {
+      cover.classList.remove('spinning');
+      playIcon.innerHTML = ICON_PLAY;
+    }
+  }
+
+  // ★ 格式化时间：对非法值兜底，避免出现 NaN:NaN 或 0:00 异常
+  function fmt(t){
+    if(!isFinite(t) || t < 0) return '0:00';
+    const m = Math.floor(t / 60), s = Math.floor(t % 60);
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  }
+
+  // ★ 更新总时长显示（多处会调用，故抽成函数）
+  function updateTotalTime(){
+    totTimeEl.textContent = fmt(audio.duration);
+  }
+
+  // ★ 探测 music/ 目录是否也存在同名文件，若有则统一加 music/ 前缀
+  let basePath = '';
+  fetch('music/', { method:'HEAD' })
+    .then(r => { if(r.ok) basePath = 'music/'; })
+    .catch(()=>{})
+    .finally(()=>{
+      playlist = playlistRaw.map(t => ({ name:t.name, file: basePath + t.file }));
+      // ★ 路径确定后再设置 src（此前 audio 未加载，避免用错路径）
+      if(!audio.src) loadTrack(0);
+    });
+
+  let idx = 0, isPlaying = false, hasError = false;
+
+  function loadTrack(i){
+    idx = ((i % playlist.length) + playlist.length) % playlist.length;
+    const track = playlist[idx];
+    audio.src = track.file;
+    trackName.textContent = track.name;
+    trackIndex.textContent = `${idx+1} / ${playlist.length}`;
+    curTimeEl.textContent = '0:00';
+    barFill.style.width = '0%';
+    hasError = false;
+    updateTotalTime(); // ★ 先清成 0:00，等元数据加载后再刷新真实值
+
+    // ★ 加载失败提示：文件不存在 / 路径错误 / 格式不支持 都会触发，便于排查
+    audio.onerror = () => {
+      hasError = true;
+      console.error(`[音乐] 无法加载：${audio.src}\n请确认该 mp3 文件与 index.html 在同一目录。\n可用文件列表：${playlist.map(t=>t.file).join(', ')}`);
+    };
+  }
+
+  // ★ 安全播放：必须在用户点击事件的同步链路内调用 audio.play()
+  // 否则浏览器会因"无用户手势"而拦截（返回 rejected promise）
+  function safePlay(){
+    if(!audio.src) loadTrack(0); // 确保已设置 src
+    // 若上次加载失败，重新加载当前曲目再播
+    if(hasError){ audio.load(); hasError = false; }
+    const p = audio.play();
+    if(p && typeof p.then === 'function'){
+      p.then(()=>{
+        isPlaying = true;
+        setPlayingUI(true);
+      }).catch(err=>{
+        isPlaying = false;
+        setPlayingUI(false);
+        // 常见 err.message: "The element has no supported sources" = 文件找不到 / 路径错
+        console.warn('[音乐] 播放失败，请检查 mp3 文件是否存在于 index.html 同目录：', audio.src, '\n', err.message);
+      });
+    } else {
+      // ★ 旧浏览器 play() 不返回 Promise 的兜底
+      isPlaying = true;
+      setPlayingUI(true);
+    }
+  }
+
+  function togglePlay(){
+    if(isPlaying){
+      audio.pause();
+      isPlaying = false;
+      setPlayingUI(false);
+    } else {
+      safePlay();
+    }
+  }
+
+  // ★★★ 关键修复：元数据加载完成后刷新总时长 + 进度条基准
+  audio.addEventListener('loadedmetadata', updateTotalTime);
+  // ★ 额外保险：durationchange 也会在时长确定/变化时触发，双保险避免 0:00 残留
+  audio.addEventListener('durationchange', updateTotalTime);
+
+  audio.addEventListener('timeupdate', ()=>{
+    // ★ 再次兜底：若总时长尚未显示，趁机补一次（解决部分浏览器元数据延迟）
+    if(totTimeEl.textContent === '0:00' && audio.duration > 0) updateTotalTime();
+    const pct = audio.duration ? (audio.currentTime / audio.duration * 100) : 0;
+    barFill.style.width = pct + '%';
+    curTimeEl.textContent = fmt(audio.currentTime);
+  });
+
+  audio.addEventListener('play',  ()=>{ isPlaying = true;  setPlayingUI(true); });
+  audio.addEventListener('pause', ()=>{ isPlaying = false; setPlayingUI(false); });
+
+  audio.addEventListener('ended', ()=>{ loadTrack(idx+1); if(isPlaying) safePlay(); });
+
+  playBtn.addEventListener('click', togglePlay);
+  document.getElementById('prevBtn').addEventListener('click', ()=>{ loadTrack(idx-1); if(isPlaying) safePlay(); });
+  document.getElementById('nextBtn').addEventListener('click', ()=>{ loadTrack(idx+1); if(isPlaying) safePlay(); });
+  barTrack.addEventListener('click', e => {
+    if(!audio.duration) return;
+    const rect = barTrack.getBoundingClientRect();
+    audio.currentTime = ((e.clientX - rect.left) / rect.width) * audio.duration;
+  });
+
+  // ★ 若未走 fetch 分支（如本地 file:// 协议 fetch 被禁），也至少先加载第一首
+  if(!audio.src) loadTrack(0);
+})();
+
+/* ============================================================
+   （烟花模拟器已改为外链跳转，模块已移除）
+   ============================================================ */
+</script>
+
+<!-- ===== 烟花模拟器覆盖层（iframe 嵌入原版，声音/画质与原站一致） ===== -->
+<div class="fw-overlay" id="fwOverlay">
+  <button class="btn fw-close" id="fwCloseBtn" title="关闭" aria-label="关闭">
+    <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+  </button>
+  <iframe id="fwIframe" class="fw-iframe" src="about:blank" allow="autoplay; fullscreen"></iframe>
+</div>
+
+<script>
+/* ============================================================
+   烟花模拟器 —— iframe 覆盖层控制逻辑
+   点击按钮全屏加载 eproall.us.ci/2（原版，声音/画质完整保留）
+   ============================================================ */
+(function(){
+  const FIREWORKS_URL = 'https://eproall.us.ci/2/index.html';
+
+  const overlay  = document.getElementById('fwOverlay');
+  const iframe   = document.getElementById('fwIframe');
+  const openBtn  = document.getElementById('fwOpenBtn');
+  const closeBtn = document.getElementById('fwCloseBtn');
+  const audio    = document.getElementById('audio'); // 主站音乐播放器
+  let isOpen = false;
+  let musicWasPlaying = false; // 记录打开前音乐是否在播放
+
+  /* ---- 打开：加载原版烟花模拟器 ---- */
+  function openFW(){
+    if(isOpen) return;
+    isOpen = true;
+
+    // ★ 打开烟花前，暂停主站音乐（避免两个音频上下文冲突，也是修复"音乐不能播"的关键）
+    if(audio){
+      musicWasPlaying = !audio.paused;
+      if(musicWasPlaying){
+        try { audio.pause(); } catch(e){}
+      }
+    }
+
+    iframe.src = FIREWORKS_URL;       // 每次打开重新加载，保证音频可激活
+    overlay.classList.add('fw-open');
+    document.body.style.overflow = 'hidden';  // 禁止底层滚动
+    closeBtn.focus();
+  }
+
+  /* ---- 关闭：停止并清空 iframe ---- */
+  function closeFW(){
+    if(!isOpen) return;
+    isOpen = false;
+    overlay.classList.remove('fw-open');
+    document.body.style.overflow = '';
+
+    // 延迟清空 src，等淡出动画结束后再停
+    setTimeout(() => { iframe.src = 'about:blank'; }, 500);
+
+    // ★ 关闭烟花后，若之前在播放音乐则恢复
+    // 关键点：必须在点击关闭的【同步链路】内调用 play()，不能包在 requestAnimationFrame/setTimeout 里
+    if(audio && musicWasPlaying){
+      const p = audio.play();
+      if(p && typeof p.then === 'function'){
+        p.then(()=>{ /* 恢复成功 */ }).catch(err=>{
+          console.warn('[音乐] 关闭烟花后恢复播放被拦截（需先与页面交互过）：', err.message);
+          // 兜底：标记未播放，用户再次点击播放按钮即可
+          musicWasPlaying = false;
+        });
+      }
+    }
+  }
+
+  openBtn.addEventListener('click', openFW);
+  closeBtn.addEventListener('click', closeFW);
+
+  // ESC 关闭
+  document.addEventListener('keydown', e => {
+    if(e.key === 'Escape' && isOpen) closeFW();
+  });
+})();
+</script>
+</body>
+</html>
