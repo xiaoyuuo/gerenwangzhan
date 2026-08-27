@@ -1017,5 +1017,281 @@ footer .foot-love span{color:var(--accent)}
   });
 })();
 </script>
+
+<!-- SVG全局滤镜定义 -->
+<svg class="hidden">
+  <defs>
+    <!--鼠标拖尾滤镜-->
+    <filter id="glow-trail-filter" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <!--电光边框噪声扰动滤镜 -->
+    <filter id="electric-filter" x="-30%" y="-30%" width="160%" height="160%" color‑interpolation‑filters="sRGB">
+      <feTurbulence id="turb" type="fractalNoise" baseFrequency="0.045 0.065" numOctaves="2" seed="3" result="noise">
+        <animate attributeName="seed" values="1;20;1" dur="2.2s" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="7" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+</svg>
+
+<style>
+/* ==========流体发光鼠标拖尾========== */
+#glowCursorTrail {
+  position: fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:9998;
+}
+.trail-point {
+  position:absolute;
+  border-radius:50%;
+  will-change: transform, opacity;
+  filter:url(#glow-trail-filter);
+}
+
+/* ==========Gradual‑Blur全局页面模糊层========== */
+.page-blur-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 9997;
+  pointer-events: none;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  opacity:1;
+  transition: backdrop-filter 1.2s cubic‑bezier(0.22, 1, 0.36, 1), opacity 1.2s cubic‑bezier(0.22, 1, 0.36, 1);
+}
+.page-blur-wrap.clear {
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  opacity:0;
+}
+
+/* ==========更新公告弹窗遮罩========== */
+.update-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 10000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* ==========Electric‑Border电光电流外框========== */
+.electric-wrap{
+  position:relative;
+  border-radius:24px;
+}
+.electric-border-layer{
+  position:absolute;
+  inset:-3px;
+  border-radius:24px;
+  border:2px solid #5227FF;
+  filter:url(#electric-filter);
+  box-shadow:
+    0 0 12px #5227FF,
+    0 0 26px rgba(82, 39, 255,0.55),
+    inset 0 0 14px rgba(82, 39, 255,0.25);
+  pointer-events:none;
+  z-index:1;
+}
+
+/* ==========液态玻璃弹窗本体========== */
+.update-box {
+  width:520px;
+  max-width:90vw;
+  max-height:85vh;
+  padding:28px;
+  border-radius:24px;
+  position:relative;
+  overflow:hidden;
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  border:1px solid rgba(255,255,255,0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.35),
+    inset 0 -1px 0 rgba(255,255,255,0.1),
+    0 8px 40px rgba(0,0,0,0.25);
+  color:#ffffff;
+  z-index:2;
+}
+.update-box h3 {
+  margin:0 0 14px;
+  font-size:20px;
+}
+.update-content {
+  max-height:280px;
+  overflow-y:auto;
+  padding:12px;
+  border-radius:14px;
+  background:rgba(255,255,255,0.06);
+  margin-bottom:18px;
+}
+.update-item {
+  margin-bottom:12px;
+  padding-bottom:12px;
+  border-bottom:1px solid rgba(255,255,255,0.12);
+}
+.update-item:last-child {
+  border-bottom:none;
+  margin-bottom:0;
+  padding-bottom:0;
+}
+.update-date {
+  font-size:13px;
+  opacity:0.7;
+  margin-bottom:4px;
+}
+.update-text {
+  font-size:14px;
+  line-height:1.6;
+}
+.update-close-btn {
+  width:100%;
+  padding:11px;
+  border:none;
+  border-radius:14px;
+  background:rgba(255,255,255,0.16);
+  color:#fff;
+  font-size:15px;
+  cursor:pointer;
+  backdrop-filter: blur(12px);
+  transition: 0.2s ease;
+}
+.update-close-btn:hover {
+  background:rgba(255,255,255,0.24);
+}
+
+/* ==========Animated‑Content滚动入场动画 模拟power3.out缓动 cubic‑bezier(0.17, 0.67, 0.3, 0.99)========== */
+.animate-scroll {
+  opacity:0;
+  transform: translateY(100px); /* distance:100px */
+  transition:
+    opacity 0.8s cubic‑bezier(0.17, 0.67, 0.3, 0.99),
+    transform 0.8s cubic‑bezier(0.17, 0.67, 0.3, 0.99);
+}
+.animate-scroll.visible{
+  opacity:1;
+  transform: translateY(0px);
+}
+</style>
+
+<!--DOM元素-->
+<div id="glowCursorTrail"></div>
+<div class="page-blur-wrap" id="pageBlurLayer"></div>
+
+<div class="update-mask" id="updateMask">
+  <div class="electric-wrap">
+    <div class="electric-border-layer"></div>
+    <div class="update-box">
+      <h3>📢 网站更新公告</h3>
+      <div class="update-content" id="updateList"></div>
+      <button class="update-close-btn" id="closeUpdateBtn">知道了</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==========更新公告记录，自由编辑==========
+const updateLogs = [
+  {
+    date:"2026‑08‑27",
+    text:"✅ 烟花模拟器部署，修复资源路径问题。"
+  },
+  {
+    date:"2026‑08‑28",
+    text:"✨新增Animated‑Content滚动入场动画，页面所有元素滚动滑入淡入。"
+  }
+];
+
+const mask = document.getElementById('updateMask');
+const listWrap = document.getElementById('updateList');
+const closeBtn = document.getElementById('closeUpdateBtn');
+const pageBlurLayer = document.getElementById('pageBlurLayer');
+
+function renderLogs(){
+  listWrap.innerHTML = '';
+  updateLogs.forEach(log=>{
+    const div = document.createElement('div');
+    div.className = "update-item";
+    div.innerHTML = `
+      <div class="update-date">${log.date}</div>
+      <div class="update-text">${log.text}</div>
+    `;
+    listWrap.appendChild(div);
+  })
+}
+
+window.addEventListener('load',()=>{
+  if(!sessionStorage.getItem('noticeClosed')){
+    renderLogs();
+    mask.style.display = 'flex';
+    pageBlurLayer.classList.remove('clear');
+  }else{
+    pageBlurLayer.classList.add('clear');
+  }
+})
+
+closeBtn.addEventListener('click',()=>{
+  mask.style.display = 'none';
+  sessionStorage.setItem('noticeClosed','1');
+  pageBlurLayer.classList.add('clear');
+})
+
+// ==========流体发光鼠标拖尾==========
+const trailContainer = document.getElementById('glowCursorTrail');
+const points = [];
+const maxPoints = 22;
+let mouseX = 0, mouseY = 0;
+
+for(let i=0;i<maxPoints;i++){
+  const el = document.createElement('div');
+  el.className = 'trail-point';
+  el.style.width = el.style.height = `${14 - i*0.45}px`;
+  el.style.background = `rgba(140, 200, 255, ${0.72 - i*0.032})`;
+  trailContainer.appendChild(el);
+  points.push({el,x:0,y:0});
+}
+
+window.addEventListener('mousemove',(e)=>{
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+})
+
+function animateTrail(){
+  let x = mouseX;
+  let y = mouseY;
+  points.forEach((p)=>{
+    p.x += (x - p.x) * 0.22;
+    p.y += (y - p.y) * 0.22;
+    p.el.style.transform = `translate(${p.x}px,${p.y}px)`;
+    x = p.x; y = p.y;
+  })
+  requestAnimationFrame(animateTrail);
+}
+animateTrail();
+
+// ==========Animated‑Content 滚动入场动画 IntersectionObserver 实现 对应threshold:0.1==========
+const scrollObserver = new IntersectionObserver((entries)=>{
+  entries.forEach(entry=>{
+    if(entry.isIntersecting){
+      entry.target.classList.add('visible');
+      scrollObserver.unobserve(entry.target); //动画只执行一次
+    }
+  })
+},{threshold:0.1});
+
+// 给所有需要滚动动画的标签加上 class="animate-scroll"
+document.querySelectorAll('.animate-scroll').forEach(el=>{
+  scrollObserver.observe(el);
+})
+</script>
+
+
 </body>
 </html>
